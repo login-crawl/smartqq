@@ -66,29 +66,30 @@ public class SmartQQClient implements Closeable {
     private volatile boolean pollStarted;
 
 
-    public SmartQQClient(final MessageCallback callback) {
+    public SmartQQClient() {
         this.client = Client.pooled().maxPerRoute(5).maxTotal(10).build();
         this.session = client.session();
         login();
+
+    }
+
+    public void setCallBack(final MessageCallback callback){
         if (callback != null) {
             this.pollStarted = true;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        if (!pollStarted) {
-                            return;
-                        }
-                        try {
-                            pollMessage(callback);
-                        } catch (RequestException e) {
-                            //忽略SocketTimeoutException
-                            if (!(e.getCause() instanceof SocketTimeoutException)) {
-                                LOGGER.error(e.getMessage());
-                            }
-                        } catch (Exception e) {
+            new Thread(() -> {
+                while (true) {
+                    if (!pollStarted) {
+                        return;
+                    }
+                    try {
+                        pollMessage(callback);
+                    } catch (RequestException e) {
+                        //忽略SocketTimeoutException
+                        if (!(e.getCause() instanceof SocketTimeoutException)) {
                             LOGGER.error(e.getMessage());
                         }
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage());
                     }
                 }
             }).start();
@@ -392,7 +393,11 @@ public class SmartQQClient implements Closeable {
         JSONArray marknames = result.getJSONArray("marknames");
         for (int i = 0; marknames != null && i < marknames.size(); i++) {
             JSONObject item = marknames.getJSONObject(i);
-            friendMap.get(item.getLongValue("uin")).setMarkname(item.getString("markname"));
+            Friend friend = friendMap.get(item.getLongValue("uin"));
+            if (friend!=null){
+                friend.setMarkname(item.getString("markname"));
+            }
+
         }
         JSONArray vipinfo = result.getJSONArray("vipinfo");
         for (int i = 0; vipinfo != null && i < vipinfo.size(); i++) {

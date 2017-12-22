@@ -28,6 +28,14 @@ public class Discuss {
         return name;
     }
 
+    @Override
+    public String toString() {
+        return "Discuss{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
     public void setName(String name) {
         this.name = name;
     }

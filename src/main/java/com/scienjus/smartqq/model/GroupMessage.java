@@ -11,14 +11,24 @@ import com.alibaba.fastjson.JSONObject;
  * @date 15/12/19.
  */
 public class GroupMessage {
+    @Override
+    public String toString() {
+        return "GroupMessage{" +
+                "groupId=" + groupId +
+                ", time=" + time +
+                ", content='" + content + '\'' +
+                ", userId=" + userId +
+                ", font=" + font +
+                '}';
+    }
 
-    private long groupId;
+    private Long groupId;
 
-    private long time;
+    private Long time;
 
     private String content;
 
-    private long userId;
+    private Long userId;
 
     private Font font;
 
@@ -38,19 +48,19 @@ public class GroupMessage {
         this.userId = json.getLongValue("send_uin");
     }
 
-    public long getGroupId() {
+    public Long getGroupId() {
         return groupId;
     }
 
-    public void setGroupId(long groupId) {
+    public void setGroupId(Long groupId) {
         this.groupId = groupId;
     }
 
-    public long getTime() {
+    public Long getTime() {
         return time;
     }
 
-    public void setTime(long time) {
+    public void setTime(Long time) {
         this.time = time;
     }
 
@@ -62,11 +72,11 @@ public class GroupMessage {
         this.content = content;
     }
 
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(long userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

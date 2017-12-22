@@ -21,13 +21,13 @@ public class Friend {
 
     @Override
     public String toString() {
-        return "Friend{"
-                + "userId=" + userId
-                + ", markname='" + markname + '\''
-                + ", nickname='" + nickname + '\''
-                + ", vip=" + vip
-                + ", vipLevel=" + vipLevel
-                + '}';
+        return "Friend{" +
+                "userId=" + userId +
+                ", markname='" + markname + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", vip=" + vip +
+                ", vipLevel=" + vipLevel +
+                '}';
     }
 
     public long getUserId() {

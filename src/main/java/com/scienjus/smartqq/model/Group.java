@@ -52,4 +52,13 @@ public class Group {
         this.code = code;
     }
 
+    @Override
+    public String toString() {
+        return "Group{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", flag=" + flag +
+                ", code=" + code +
+                '}';
+    }
 }
