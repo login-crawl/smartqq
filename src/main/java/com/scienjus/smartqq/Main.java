@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TestApplication {
+public class Main {
 
     static HashSet<Long> groups = new HashSet<>();
     static HashSet<Long> friends = new HashSet<>();
