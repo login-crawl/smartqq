@@ -19,7 +19,7 @@ public class Turing {
 
     public static void main(String[] args) throws IOException {
 
-        String question = "北京今日天气\n\n";//这是上传给云机器人的问题
+        String question = "财运";//这是上传给云机器人的问题
         //String INFO = URLEncoder.encode("北京今日天气", "utf-8");
         System.out.println(question);
         String sb = getAnser(question);

@@ -52,6 +52,8 @@ public class TestApplication {
         String nick = accountInfo.getNick();
 
         client.setCallBack(new MessageCallback() {
+            public long delay=5000L;
+
             @Override
             public void onMessage(Message message) {
                 System.out.println(message.getContent());
@@ -153,7 +155,7 @@ public class TestApplication {
 
 
                         } else {
-                            sb.append("我已关闭\n请说: 宝宝 打开服务");
+                            sb.append("我已关闭\n请说: @"+nick+" 打开服务");
                         }
 
                         if (sb.length() == 0) {
@@ -195,6 +197,11 @@ public class TestApplication {
                         }
                     }
                     if (sb.length() > 0) {
+                        try {
+                            Thread.sleep(delay);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         client.sendMessageToGroup(msg.getGroupId(), sb.append("@"+msgNick).append(" (づ~ 3~)づ").toString());
                     }
 
@@ -254,6 +261,11 @@ public class TestApplication {
 
 
                     if (sb.length() > 0) {
+                        try {
+                            Thread.sleep(delay);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         client.sendMessageToGroup(msg.getGroupId(), sb.append("@"+msgNick).append(" (づ~ 3~)づ").toString());
 
                     }

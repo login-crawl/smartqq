@@ -28,7 +28,7 @@ public enum ApiURL {
     ),
     GET_VFWEBQQ(
             "https://s.web2.qq.com/api/getvfwebqq?ptwebqq={1}&clientid=53999199&psessionid=&t=0.1",
-            "https://s.web2.qq.com/proxy.html?v=20130916001&callback=1&id=1"
+            "https://s.web2.qq.com/proxy.html?v=20151105001&callback=1&id=1"
     ),
     GET_UIN_AND_PSESSIONID(
             "https://d1.web2.qq.com/channel/login2",
