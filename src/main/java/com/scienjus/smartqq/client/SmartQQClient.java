@@ -271,14 +271,16 @@ public class SmartQQClient implements Closeable {
         while (stringBuilder.length() > 200) {
             JSONObject r = new JSONObject();
             r.put("group_uin", groupId);
-            r.put("content", JSON.toJSONString(Arrays.asList(stringBuilder.substring(0, 200)+ Main.getRandomSnow(), Arrays.asList("font", Font.DEFAULT_FONT))));  //注意这里虽然格式是Json，但是实际是String
+            r.put("content", JSON.toJSONString(Arrays.asList(stringBuilder.substring(0, 200) + Main.getRandomSnow(), Arrays.asList("font", Font.DEFAULT_FONT))));  //注意这里虽然格式是Json，但是实际是String
             r.put("face", 573);
             r.put("clientid", Client_ID);
             r.put("msg_id", MESSAGE_ID++);
             r.put("psessionid", psessionid);
 
             Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
-            checkSendMsgResult(response);
+            if (!checkSendMsgResult(response)) {
+                Main.removeGroup(groupId);
+            }
             stringBuilder.delete(0, 200);
         }
 
@@ -292,7 +294,9 @@ public class SmartQQClient implements Closeable {
             r.put("psessionid", psessionid);
 
             Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
-            checkSendMsgResult(response);
+            if (!checkSendMsgResult(response)) {
+                Main.removeGroup(groupId);
+            }
         }
 
     }
@@ -675,7 +679,7 @@ public class SmartQQClient implements Closeable {
     }
 
     //检查消息是否发送成功
-    private static void checkSendMsgResult(Response<String> response) {
+    private static boolean checkSendMsgResult(Response<String> response) {
         if (response.getStatusCode() != 200) {
             LOGGER.error(String.format("发送失败，Http返回码[%d]", response.getStatusCode()));
         }
@@ -683,9 +687,12 @@ public class SmartQQClient implements Closeable {
         Integer errCode = json.getInteger("retcode");
         if (errCode != null && errCode == 0) {
             LOGGER.debug("发送成功");
+            return true;
         } else {
             LOGGER.error(String.format("发送失败，Api返回码[%d]", json.getInteger("retcode")));
         }
+
+        return false;
     }
 
     //检验Json返回结果

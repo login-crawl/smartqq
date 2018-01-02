@@ -96,11 +96,11 @@ public class Main {
             private boolean openCloseService(GroupMessage msg, StringBuilder sb) {
                 boolean ischange = groups.contains(msg.getGroupId());
                 if (msg.getContent().contains("关闭服务")) {
-                    groups.remove(msg.getGroupId());
+                    removeGroup(msg.getGroupId());
                     sb.append("已关闭\n");
                     ischange = (ischange != groups.contains(msg.getGroupId()));
                 } else if (msg.getContent().contains("打开服务")) {
-                    groups.add(msg.getGroupId());
+                    addGroup(msg.getGroupId());
                     sb.append("已打开\n");
                     ischange = (ischange != groups.contains(msg.getGroupId()));
                 }
@@ -276,7 +276,7 @@ public class Main {
                         "\n2.查看所有讨论组" +
                         "\n3.查看所有好友" +
                         "\n4.添加要管理的群" +
-                        "\n5.添加要管理的讨论组" +
+                        "\n5.删除要管理的群" +
                         "\n6.添加要管理的好友" +
                         "\n7.添加指定群的所有好友" +
                         "\n8.导出指定群的好友列表" +
@@ -312,10 +312,13 @@ public class Main {
                         break;
                     case "4":
                         Long aLong = Long.valueOf(scan.nextLine());
-                        groups.add(aLong);
+                        addGroup(aLong);
                         System.out.println("添加群成功" + aLong);
                         break;
                     case "5":
+                        Long aLong2 = Long.valueOf(scan.nextLine());
+                        removeGroup(aLong2);
+                        System.out.println("添加群成功" + aLong2);
                         break;
                     case "6":
                         break;
@@ -338,6 +341,14 @@ public class Main {
 
         }
 
+    }
+
+    public static void addGroup(Long groupId) {
+        groups.add(groupId);
+    }
+
+    public static void removeGroup(Long groupId) {
+        groups.remove(groupId);
     }
 
     private static boolean command(GroupMessage msg, HashMap<String, String> lastMsg, String msgNick, StringBuilder sb) {
