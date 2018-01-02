@@ -1,10 +1,12 @@
 package com.scienjus.smartqq;
 
+import com.linshixun.util.Fortunetelling;
 import com.linshixun.util.Serial;
 import com.linshixun.util.Turing;
 import com.scienjus.smartqq.callback.MessageCallback;
 import com.scienjus.smartqq.client.SmartQQClient;
 import com.scienjus.smartqq.model.*;
+import com.sun.deploy.util.ArrayUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
+
+
+    static Long licenseDate;
 
     static HashSet<Long> groups = new HashSet<>();
     static HashSet<Long> friends = new HashSet<>();
@@ -32,12 +37,39 @@ public class Main {
     static HashMap<String, String> faq;
 
     static HashMap<Long, HashMap<String, String>> lastContent = new HashMap<>();
-    static String[] keyword = new String[]{"关闭服务", "打开服务"};
+    static ArrayList<String> keyword = new ArrayList<>();
+    static HashSet<String> snowflakes = new HashSet<>();
+    static Object[] snowflakesarray;
+
+    static {
+
+        Collections.addAll(keyword, new String[]{"关闭服务", "打开服务", "测字"});
 
 
+        String s = "✽❁❃❋❋❂✱✲✳✵✵✸✸✺✻✼❄❅❆❇✺✻✼❄❅❆❇❉❊❉❊";
+        for (char c : s.toCharArray()) {
+            snowflakes.add(String.valueOf(c));
+        }
+        snowflakesarray = snowflakes.toArray();
+    }
+
+
+    public static Integer getRandom(int start, int end) {
+        return (int) (Math.random() * (end - start + 1) + start);
+    }
 
 
     public static void main(String[] args) {
+
+        Long license = (Long) Serial.loadHessian(new File("license"));
+
+        if (license == null) {
+            System.out.println("License file cannot be found , please contact QQ:1990886924");
+            System.exit(0);
+        } else if (license < System.currentTimeMillis()) {
+            System.out.println("License has expired !");
+            System.exit(0);
+        }
 
         faq = (HashMap<String, String>) Serial.loadHessian(new File("faq"));
         if (faq == null) {
@@ -50,102 +82,62 @@ public class Main {
 
         UserInfo accountInfo = client.getAccountInfo();
         String nick = accountInfo.getNick();
+        keyword.add(nick);
+
 
         client.setCallBack(new MessageCallback() {
-            public long delay=5000L;
+            public long delay = 5000L;
 
             @Override
             public void onMessage(Message message) {
                 System.out.println(message.getContent());
             }
 
-            private void openCloseService(GroupMessage msg, StringBuilder sb) {
+            private boolean openCloseService(GroupMessage msg, StringBuilder sb) {
+                boolean ischange = groups.contains(msg.getGroupId());
                 if (msg.getContent().contains("关闭服务")) {
                     groups.remove(msg.getGroupId());
                     sb.append("已关闭\n");
+                    ischange = (ischange != groups.contains(msg.getGroupId()));
                 } else if (msg.getContent().contains("打开服务")) {
                     groups.add(msg.getGroupId());
                     sb.append("已打开\n");
+                    ischange = (ischange != groups.contains(msg.getGroupId()));
                 }
+
+                return ischange;
             }
 
             @Override
             public void onGroupMessage(GroupMessage msg) {
                 System.out.println(msg);
-
-                if (msg.getContent().endsWith(" (づ~ 3~)づ")) {
-                    return;
-                }
-
+                //记录用户之前说了什么
                 HashMap<String, String> lastMsg = lastContent.get(msg.getGroupId());
                 if (lastMsg == null) {
                     lastMsg = new HashMap<>();
                     lastContent.put(msg.getGroupId(), lastMsg);
                 }
+
+                //返回当前说话用户nick
                 String msgNick = getGroupUserNick(msg, client);
+
+
                 StringBuilder sb = new StringBuilder();
 
                 if (!msgNick.equals(nick)) {
-                    //所有功能忽略自己
-                    if (msg.getContent().contains(nick)) {
+                    //别人说
+
+                    if (msg.getContent().contains("@" + nick)) {
+                        //@我
 
                         //私有消息
-                        openCloseService(msg, sb);
+                        boolean ischange = openCloseService(msg, sb);
 
                         if (groups.contains(msg.getGroupId())) {
 
-                            if (msg.getContent().contains("刚刚说什么")) {
-                                String learnRegx = "@([\\S\\s]+?)[\\s]*刚刚说什么";
-                                Matcher matcher = Pattern.compile(learnRegx).matcher(msg.getContent());
-                                if (matcher.find()) {
-                                    if (lastMsg.containsKey(matcher.group(1))) {
-                                        sb.append(matcher.group(1) + "最后一条消息是:" + lastMsg.get(matcher.group(1)));
-                                    } else {
-                                        sb.append("我也不知道呀");
-                                    }
-                                }
-                            } else if (msg.getContent().contains("删除")) {
-                                int size = faq.size();
-
-                                Pattern compile = Pattern.compile("删除([\\S\\s]+?)$");
-                                Matcher matcher = compile.matcher(msg.getContent().trim());
-                                if (matcher.find()) {
-                                    faq.remove(matcher.group(1));
-                                    sb.append("已经删除问题:" + matcher.group(1));
-                                }
-
-                                if (size != faq.size()) {
-                                    Serial.storeHessian(faq, "faq");
-                                }
-                            } else if (msg.getContent().contains("学") && msg.getContent().contains("答")) {
-                                int size = faq.size();
-                                String learnRegx = "[\\S\\s]*学[\\S\\s]+?答[\\S\\s]+";
-                                String content = msg.getContent();
-                                if (content.matches(learnRegx)) {
-                                    Pattern compile = Pattern.compile("学([\\S\\s]+?)答([\\S\\s]+)");
-                                    Matcher matcher = compile.matcher(msg.getContent().trim());
-                                    if (matcher.find()) {
-
-
-                                        String group = matcher.group(1).trim();
-                                        String group1 = matcher.group(2).trim();
-
-                                        for (String s : keyword) {
-                                            group = group.replaceAll(s, "");
-                                            group1 = group1.replaceAll(s, "");
-                                        }
-                                        faq.put(group, group1 + "\n由[" + msgNick + "]提供");
-                                        sb.append("我又学习到新技能咯: 问: " + group + " 答: " + group1 + "\n删除的口令是:宝宝 删除xxx");
-                                    }
-                                }
-
-                                if (size != faq.size()) {
-                                    Serial.storeHessian(faq, "faq");
-                                }
-                            } else {
+                            if (!command(msg, lastMsg, msgNick, sb) && !ischange) {
                                 try {
-                                    String anser = Turing.getAnser(msg.getContent().replaceAll(nick,""));
-
+                                    String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""));
                                     if (anser != null)
                                         sb.append(anser);
                                 } catch (IOException e) {
@@ -155,7 +147,7 @@ public class Main {
 
 
                         } else {
-                            sb.append("我已关闭\n请说: @"+nick+" 打开服务");
+                            sb.append("我已关闭\n请说: @" + nick + " 打开服务");
                         }
 
                         if (sb.length() == 0) {
@@ -164,10 +156,12 @@ public class Main {
                         }
 
 
+                    } else if (msg.getContent().contains("@")) {
+                        //@他人
+                        return;
                     } else {
-
+                        //无@
                         //公共消息
-
                         if (groups.contains(msg.getGroupId())) {
                             if (msg.getContent().contains("手续费") || msg.getContent().contains("百分百") || msg.getContent().contains("加微信") || msg.getContent().contains("包下款") || msg.getContent().contains("无视黑白") || msg.getContent().contains("http://") || msg.getContent().contains("https://")) {
                                 sb.append("管理员 ," + msgNick + "正在传播小广告\n");
@@ -175,6 +169,25 @@ public class Main {
                                 sb.append("重大申明，本人拒收来自支付宝的任何形式的转账，要转账请直接转我qq钱包\n");
                             } else if (msg.getContent().contains("调戏")) {
                                 sb.append("管理员 ," + msgNick + "正在调戏妇女儿童\n");
+                            } else if (msg.getContent().contains("测字")) {
+                                Pattern compile = Pattern.compile("[\\S\\s]*?测字([\\S\\s]{3,})");
+                                Matcher matcher = compile.matcher(msg.getContent().trim());
+                                if (matcher.find()) {
+                                    try {
+                                        String anser = Fortunetelling.getAnser(matcher.group(1).trim());
+
+                                        if (anser != null) {
+                                            sb.append(anser);
+                                        } else {
+                                            sb.append("测字需要三个汉字呢\n如: 测字 王重阳");
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    sb.append("测字需要三个汉字呢\n如: 测字 王重阳");
+                                }
+
                             } else {
 
                                 faq.forEach((a, q) -> {
@@ -185,7 +198,7 @@ public class Main {
 
                                 if (sb.length() == 0) {
                                     try {
-                                        String anser = Turing.getAnser(msg.getContent().replaceAll(nick,""));
+                                        String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""));
 
                                         if (anser != null)
                                             sb.append(anser);
@@ -202,73 +215,33 @@ public class Main {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        client.sendMessageToGroup(msg.getGroupId(), sb.append("@"+msgNick).append(" (づ~ 3~)づ").toString());
+
+                        client.sendMessageToGroup(msg.getGroupId(), sb.append("@" + msgNick).toString());
                     }
 
                     lastMsg.put(msgNick, msg.getContent());
                 } else {
-                    openCloseService(msg, sb);
 
-                    if (msg.getContent().contains("刚刚说什么")) {
-                        String learnRegx = "@([\\S\\s]+?)[\\s]*刚刚说什么";
-                        Matcher matcher = Pattern.compile(learnRegx).matcher(msg.getContent());
-                        if (matcher.find()) {
-                            if (lastMsg.containsKey(matcher.group(1))) {
-                                sb.append(matcher.group(1) + "最后一条消息是:" + lastMsg.get(matcher.group(1)));
-                            } else {
-                                sb.append("我也不知道呀");
+                    //我说
+                    if (snowflakes.contains(msg.getContent().substring(msg.getContent().length() - 1))) {
+                        //我回复
+                        return;
+                    } else {
+                        //我的指令
+                        openCloseService(msg, sb);
+                        command(msg, lastMsg, msgNick, sb);
+
+                        if (sb.length() > 0) {
+                            try {
+                                Thread.sleep(delay);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
-                        }
-                    } else if (msg.getContent().contains("删除")) {
-                        int size = faq.size();
+                            client.sendMessageToGroup(msg.getGroupId(), sb.append("@" + msgNick).toString());
 
-                        Pattern compile = Pattern.compile("删除([\\S\\s]+?)$");
-                        Matcher matcher = compile.matcher(msg.getContent().trim());
-                        if (matcher.find()) {
-                            faq.remove(matcher.group(1));
-                            sb.append("已经删除问题:" + matcher.group(1));
-                        }
-
-                        if (size != faq.size()) {
-                            Serial.storeHessian(faq, "faq");
-                        }
-                    } else if (msg.getContent().contains("学") && msg.getContent().contains("答")) {
-                        int size = faq.size();
-                        String learnRegx = "[\\S\\s]*学[\\S\\s]+?答[\\S\\s]+";
-                        String content = msg.getContent();
-                        if (content.matches(learnRegx)) {
-                            Pattern compile = Pattern.compile("学([\\S\\s]+?)答([\\S\\s]+)");
-                            Matcher matcher = compile.matcher(msg.getContent().trim());
-                            if (matcher.find()) {
-
-
-                                String group = matcher.group(1).trim();
-                                String group1 = matcher.group(2).trim();
-
-                                for (String s : keyword) {
-                                    group = group.replaceAll(s, "");
-                                    group1 = group1.replaceAll(s, "");
-                                }
-                                faq.put(group, group1 + "\n由[" + msgNick + "]提供");
-                                sb.append("我又学习到新技能咯: 问: " + group + " 答: " + group1 + "\n删除的口令是:宝宝 删除xxx");
-                            }
-                        }
-
-                        if (size != faq.size()) {
-                            Serial.storeHessian(faq, "faq");
                         }
                     }
 
-
-                    if (sb.length() > 0) {
-                        try {
-                            Thread.sleep(delay);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        client.sendMessageToGroup(msg.getGroupId(), sb.append("@"+msgNick).append(" (づ~ 3~)づ").toString());
-
-                    }
                 }
             }
 
@@ -365,6 +338,87 @@ public class Main {
 
         }
 
+    }
+
+    private static boolean command(GroupMessage msg, HashMap<String, String> lastMsg, String msgNick, StringBuilder sb) {
+        boolean flag = false;
+        if (msg.getContent().contains("刚刚说什么")) {
+            String learnRegx = "@([\\S\\s]+?)[\\s]*刚刚说什么";
+            Matcher matcher = Pattern.compile(learnRegx).matcher(msg.getContent());
+            if (matcher.find()) {
+                if (lastMsg.containsKey(matcher.group(1))) {
+                    sb.append(matcher.group(1) + "最后一条消息是:" + lastMsg.get(matcher.group(1)));
+                } else {
+                    sb.append("我也不知道呀");
+                }
+            }
+            flag = true;
+        } else if (msg.getContent().contains("删除")) {
+            int size = faq.size();
+
+            Pattern compile = Pattern.compile("删除([\\S\\s]+?)$");
+            Matcher matcher = compile.matcher(msg.getContent().trim());
+            if (matcher.find()) {
+                faq.remove(matcher.group(1));
+                sb.append("已经删除问题:" + matcher.group(1));
+            }
+
+            if (size != faq.size()) {
+                Serial.storeHessian(faq, "faq");
+            }
+            flag = true;
+        } else if (msg.getContent().contains("学") && msg.getContent().contains("答")) {
+            int size = faq.size();
+            String learnRegx = "[\\S\\s]*学[\\S\\s]+?答[\\S\\s]+";
+            String content = msg.getContent();
+            if (content.matches(learnRegx)) {
+                Pattern compile = Pattern.compile("学([\\S\\s]+?)答([\\S\\s]+)");
+                Matcher matcher = compile.matcher(msg.getContent().trim());
+                if (matcher.find()) {
+
+
+                    String group = matcher.group(1).trim();
+                    String group1 = matcher.group(2).trim();
+
+                    for (String s : keyword) {
+                        group = group.replaceAll(s, "");
+                        group1 = group1.replaceAll(s, "");
+                    }
+                    faq.put(group, group1 + "\n由[" + msgNick + "]提供");
+                    sb.append("我又学习到新技能咯: 问: " + group + " 答: " + group1 + "\n删除的口令是:宝宝 删除xxx");
+                }
+
+            }
+
+            if (size != faq.size()) {
+                Serial.storeHessian(faq, "faq");
+            }
+            flag = true;
+        } else if (msg.getContent().contains("测字")) {
+            Pattern compile = Pattern.compile("[\\S\\s]*?测字([\\S\\s]{3,})");
+            Matcher matcher = compile.matcher(msg.getContent().trim());
+            if (matcher.find()) {
+                try {
+                    String anser = Fortunetelling.getAnser(matcher.group(1).trim());
+
+                    if (anser != null) {
+                        sb.append(anser);
+                    } else {
+                        sb.append("测字需要三个汉字呢\n如: 测字 王重阳");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                sb.append("测字需要三个汉字呢\n如: 测字 王重阳");
+            }
+            flag = true;
+        }
+        return flag;
+    }
+
+    public static Object getRandomSnow() {
+        return snowflakesarray[getRandom(0, snowflakesarray.length - 1)];
     }
 
 

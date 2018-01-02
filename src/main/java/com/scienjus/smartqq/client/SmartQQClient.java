@@ -3,6 +3,7 @@ package com.scienjus.smartqq.client;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.scienjus.smartqq.Main;
 import com.scienjus.smartqq.callback.MessageCallback;
 import com.scienjus.smartqq.constant.ApiURL;
 import com.scienjus.smartqq.model.*;
@@ -37,7 +38,7 @@ public class SmartQQClient implements Closeable {
 
     //发生ngnix 404 时的重试次数
     private static int retryTimesOnFailed = 3;
-    
+
     //消息id，这个好像可以随便设置，所以设成全局的
     private static long MESSAGE_ID = 43690001;
 
@@ -73,7 +74,7 @@ public class SmartQQClient implements Closeable {
 
     }
 
-    public void setCallBack(final MessageCallback callback){
+    public void setCallBack(final MessageCallback callback) {
         if (callback != null) {
             this.pollStarted = true;
             new Thread(() -> {
@@ -183,7 +184,7 @@ public class SmartQQClient implements Closeable {
         int retryTimes4Vfwebqq = retryTimesOnFailed;
         while (response.getStatusCode() == 404 && retryTimes4Vfwebqq > 0) {
             response = get(ApiURL.GET_VFWEBQQ, ptwebqq);
-            retryTimes4Vfwebqq--; 
+            retryTimes4Vfwebqq--;
         }
         this.vfwebqq = getJsonObjectResult(response).getString("vfwebqq");
     }
@@ -264,16 +265,36 @@ public class SmartQQClient implements Closeable {
     public void sendMessageToGroup(long groupId, String msg) {
         LOGGER.debug("开始发送群消息");
 
-        JSONObject r = new JSONObject();
-        r.put("group_uin", groupId);
-        r.put("content", JSON.toJSONString(Arrays.asList(msg, Arrays.asList("font", Font.DEFAULT_FONT))));  //注意这里虽然格式是Json，但是实际是String
-        r.put("face", 573);
-        r.put("clientid", Client_ID);
-        r.put("msg_id", MESSAGE_ID++);
-        r.put("psessionid", psessionid);
 
-        Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
-        checkSendMsgResult(response);
+        StringBuilder stringBuilder = new StringBuilder(msg);
+
+        while (stringBuilder.length() > 200) {
+            JSONObject r = new JSONObject();
+            r.put("group_uin", groupId);
+            r.put("content", JSON.toJSONString(Arrays.asList(stringBuilder.substring(0, 200)+ Main.getRandomSnow(), Arrays.asList("font", Font.DEFAULT_FONT))));  //注意这里虽然格式是Json，但是实际是String
+            r.put("face", 573);
+            r.put("clientid", Client_ID);
+            r.put("msg_id", MESSAGE_ID++);
+            r.put("psessionid", psessionid);
+
+            Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
+            checkSendMsgResult(response);
+            stringBuilder.delete(0, 200);
+        }
+
+        if (stringBuilder.length() > 0) {
+            JSONObject r = new JSONObject();
+            r.put("group_uin", groupId);
+            r.put("content", JSON.toJSONString(Arrays.asList(stringBuilder.append(Main.getRandomSnow()).toString(), Arrays.asList("font", Font.DEFAULT_FONT))));  //注意这里虽然格式是Json，但是实际是String
+            r.put("face", 573);
+            r.put("clientid", Client_ID);
+            r.put("msg_id", MESSAGE_ID++);
+            r.put("psessionid", psessionid);
+
+            Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
+            checkSendMsgResult(response);
+        }
+
     }
 
     /**
@@ -394,7 +415,7 @@ public class SmartQQClient implements Closeable {
         for (int i = 0; marknames != null && i < marknames.size(); i++) {
             JSONObject item = marknames.getJSONObject(i);
             Friend friend = friendMap.get(item.getLongValue("uin"));
-            if (friend!=null){
+            if (friend != null) {
                 friend.setMarkname(item.getString("markname"));
             }
 
@@ -619,7 +640,7 @@ public class SmartQQClient implements Closeable {
         if (url.getReferer() != null) {
             request.addHeader("Referer", url.getReferer());
         }
-        return request.text(StandardCharsets.UTF_8); 
+        return request.text(StandardCharsets.UTF_8);
     }
 
     //发送post请求
@@ -679,15 +700,22 @@ public class SmartQQClient implements Closeable {
         } else if (retCode != 0) {
             switch (retCode) {
                 case 103: {
-                    LOGGER.error("请求失败，Api返回码[103]。你需要进入http://w.qq.com，检查是否能正常接收消息。如果可以的话点击[设置]->[退出登录]后查看是否恢复正常"); 
+                    LOGGER.error("请求失败，Api返回码[103]。你需要进入http://w.qq.com，检查是否能正常接收消息。如果可以的话点击[设置]->[退出登录]后查看是否恢复正常");
                     break;
                 }
                 case 100100: {
                     LOGGER.debug("请求失败，Api返回码[100100]");
                     break;
                 }
+                case 100001: {
+                    LOGGER.debug("请求失败，Api返回码[100001]");
+                    System.exit(-1);
+                    break;
+                }
                 default: {
+
                     throw new RequestException(String.format("请求失败，Api返回码[%d]", retCode));
+
                 }
             }
         }
