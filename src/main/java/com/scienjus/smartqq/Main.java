@@ -152,7 +152,7 @@ public class Main {
 
                         if (sb.length() == 0) {
                             sb.append("我不知道说什么了,等我的主人回来教教我\n");
-                            sb.append("学习的口令是:宝宝 学xxx答yyy\n");
+                            sb.append("学习的口令是:@"+nick+" 学xxx答yyy\n");
                         }
 
 
