@@ -94,15 +94,16 @@ public class Main {
             }
 
             private boolean openCloseService(GroupMessage msg, StringBuilder sb) {
-                boolean ischange = groups.contains(msg.getGroupId());
+                boolean ischange =false;
+                boolean contains = groups.contains(msg.getGroupId());
                 if (msg.getContent().contains("关闭服务")) {
                     removeGroup(msg.getGroupId());
                     sb.append("已关闭\n");
-                    ischange = (ischange != groups.contains(msg.getGroupId()));
+                    ischange = (contains != groups.contains(msg.getGroupId()));
                 } else if (msg.getContent().contains("打开服务")) {
                     addGroup(msg.getGroupId());
                     sb.append("已打开\n");
-                    ischange = (ischange != groups.contains(msg.getGroupId()));
+                    ischange = (contains != groups.contains(msg.getGroupId()));
                 }
 
                 return ischange;
@@ -137,7 +138,7 @@ public class Main {
 
                             if (!command(msg, lastMsg, msgNick, sb) && !ischange) {
                                 try {
-                                    String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""));
+                                    String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""), msgNick);
                                     if (anser != null)
                                         sb.append(anser);
                                 } catch (IOException e) {
@@ -152,7 +153,7 @@ public class Main {
 
                         if (sb.length() == 0) {
                             sb.append("我不知道说什么了,等我的主人回来教教我\n");
-                            sb.append("学习的口令是:@"+nick+" 学xxx答yyy\n");
+                            sb.append("学习的口令是:@" + nick + " 学xxx答yyy\n");
                         }
 
 
@@ -198,7 +199,7 @@ public class Main {
 
                                 if (sb.length() == 0) {
                                     try {
-                                        String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""));
+                                        String anser = Turing.getAnser(msg.getContent().replaceAll(nick, ""), msgNick);
 
                                         if (anser != null)
                                             sb.append(anser);
