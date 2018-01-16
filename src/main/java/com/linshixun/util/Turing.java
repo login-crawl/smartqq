@@ -53,14 +53,14 @@ public class Turing {
         HashMap hashMap = gson.fromJson(sb.toString(), HashMap.class);
         StringBuilder stringBuilder = new StringBuilder();
         if (Double.valueOf(hashMap.get("code").toString()) >= 100000d) {
-            System.out.println(sb);
+//            System.out.println(sb);
 
             mapValues(stringBuilder, hashMap);
 
             if (stringBuilder.length() > 0) {
                 stringBuilder.setLength(stringBuilder.length() - 1);
             }
-            System.out.println(stringBuilder);
+//            System.out.println(stringBuilder);
             //            return (String) hashMap.get("text");
             return stringBuilder.toString().replaceAll("tuling", "");
         } else {

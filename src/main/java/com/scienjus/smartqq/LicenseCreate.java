@@ -7,7 +7,7 @@ public class LicenseCreate {
         if (args.length > 0)
             Serial.storeHessian(System.currentTimeMillis() + 24 * 3600 * 1000L * Long.valueOf(args[0]), "license");
         else
-            Serial.storeHessian(System.currentTimeMillis() + 24 * 3600 * 1000L * 7L, "license");
+            Serial.storeHessian(System.currentTimeMillis() + 24 * 3600 * 1000L * 30L, "license");
 
     }
 }

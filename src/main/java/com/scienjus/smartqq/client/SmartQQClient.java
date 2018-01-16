@@ -279,6 +279,7 @@ public class SmartQQClient implements Closeable {
 
             Response<String> response = postWithRetry(ApiURL.SEND_MESSAGE_TO_GROUP, r);
             if (!checkSendMsgResult(response)) {
+
                 Main.removeGroup(groupId);
             }
             stringBuilder.delete(0, 200);

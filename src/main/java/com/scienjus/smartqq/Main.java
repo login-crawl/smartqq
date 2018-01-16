@@ -6,13 +6,10 @@ import com.linshixun.util.Turing;
 import com.scienjus.smartqq.callback.MessageCallback;
 import com.scienjus.smartqq.client.SmartQQClient;
 import com.scienjus.smartqq.model.*;
-import com.sun.deploy.util.ArrayUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +37,7 @@ public class Main {
     static ArrayList<String> keyword = new ArrayList<>();
     static HashSet<String> snowflakes = new HashSet<>();
     static Object[] snowflakesarray;
+    private static boolean noHarass = true;
 
     static {
 
@@ -90,11 +88,11 @@ public class Main {
 
             @Override
             public void onMessage(Message message) {
-                System.out.println(message.getContent());
+                //                System.out.println(message.getContent());
             }
 
             private boolean openCloseService(GroupMessage msg, StringBuilder sb) {
-                boolean ischange =false;
+                boolean ischange = false;
                 boolean contains = groups.contains(msg.getGroupId());
                 if (msg.getContent().contains("关闭服务")) {
                     removeGroup(msg.getGroupId());
@@ -111,7 +109,7 @@ public class Main {
 
             @Override
             public void onGroupMessage(GroupMessage msg) {
-                System.out.println(msg);
+                //                System.out.println(msg);
                 //记录用户之前说了什么
                 HashMap<String, String> lastMsg = lastContent.get(msg.getGroupId());
                 if (lastMsg == null) {
@@ -161,6 +159,8 @@ public class Main {
                         //@他人
                         return;
                     } else {
+
+
                         //无@
                         //公共消息
                         if (groups.contains(msg.getGroupId())) {
@@ -210,7 +210,7 @@ public class Main {
                             }
                         }
                     }
-                    if (sb.length() > 0) {
+                    if (sb.length() > 0 && !noHarass) {
                         try {
                             Thread.sleep(delay);
                         } catch (InterruptedException e) {
@@ -248,7 +248,7 @@ public class Main {
 
             @Override
             public void onDiscussMessage(DiscussMessage message) {
-                System.out.println(message.getContent());
+                //                System.out.println(message.getContent());
             }
         });
 
@@ -273,23 +273,26 @@ public class Main {
 
 
                 System.out.println("功能菜单:" +
+                        "\n0.切换聊天模式" +
                         "\n1.查看所有群" +
                         "\n2.查看所有讨论组" +
                         "\n3.查看所有好友" +
                         "\n4.添加要管理的群" +
-                        "\n5.删除要管理的群" +
-                        "\n6.添加要管理的好友" +
-                        "\n7.添加指定群的所有好友" +
-                        "\n8.导出指定群的好友列表" +
-                        "\n9.群发指定列表好友信息" +
-                        "\n10.分析指定群的聊天主题" +
-                        "\n11.导出指定群的聊天记录" +
-                        "\n12.清空指定群的聊天记录");
+                        "\n5.删除要管理的群"
+                );
 
 
                 String read = scan.nextLine();
 
                 switch (read) {
+                    case "0":
+                        noHarass = !noHarass;
+                        if (noHarass) {
+                            System.out.println("切换为防骚扰聊天模式");
+                        } else {
+                            System.out.println("切换为公共聊天模式");
+                        }
+                        break;
                     case "1":
                         List<Group> groupList = client.getGroupList();
                         for (Group group : groupList) {
@@ -312,22 +315,21 @@ public class Main {
                         }
                         break;
                     case "4":
+
+                        for (Group group : client.getGroupList()) {
+                            System.out.println(group);
+                        }
+                        System.out.println("输入Group的id");
                         Long aLong = Long.valueOf(scan.nextLine());
                         addGroup(aLong);
-                        System.out.println("添加群成功" + aLong);
+                        System.out.println("已添加管理的群" + aLong);
                         break;
                     case "5":
+                        System.out.println(groups);
+                        System.out.println("输入上面已有的id");
                         Long aLong2 = Long.valueOf(scan.nextLine());
                         removeGroup(aLong2);
-                        System.out.println("添加群成功" + aLong2);
-                        break;
-                    case "6":
-                        break;
-                    case "7":
-                        break;
-                    case "8":
-                        break;
-                    case "9":
+                        System.out.println("已删除管理的群" + aLong2);
                         break;
                     default:
                         break;
@@ -349,6 +351,7 @@ public class Main {
     }
 
     public static void removeGroup(Long groupId) {
+        System.out.println("取消群的管理" + groupId);
         groups.remove(groupId);
     }
 
